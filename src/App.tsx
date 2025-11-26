@@ -60,7 +60,8 @@ function App() {
       setIsProcessing(false);
     } catch (error) {
       console.error('Error processing PDF:', error);
-      setError('Failed to process PDF. Please check your API key and try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(`Failed to process PDF: ${errorMessage}`);
       setIsProcessing(false);
       setActivePdfId(null);
     }

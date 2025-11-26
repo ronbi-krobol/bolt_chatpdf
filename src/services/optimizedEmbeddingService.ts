@@ -32,16 +32,29 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     return cached;
   }
 
-  const client = getOpenAIClient();
-  const response = await client.embeddings.create({
-    model: 'text-embedding-3-small',
-    input: text,
-  });
+  try {
+    const client = getOpenAIClient();
+    const response = await client.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: text,
+    });
 
-  const embedding = response.data[0].embedding;
-  await cacheEmbedding(text, embedding);
+    const embedding = response.data[0].embedding;
+    await cacheEmbedding(text, embedding);
 
-  return embedding;
+    return embedding;
+  } catch (error: any) {
+    if (error?.status === 401) {
+      throw new Error('Invalid OpenAI API key. Please check your VITE_OPENAI_API_KEY.');
+    }
+    if (error?.status === 429) {
+      throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+    }
+    if (error?.status === 403) {
+      throw new Error('OpenAI API access denied. Please check your API key has billing enabled.');
+    }
+    throw new Error(`OpenAI API error: ${error?.message || 'Unknown error'}`);
+  }
 }
 
 export async function generateEmbeddingsOptimized(
@@ -86,9 +99,18 @@ export async function generateEmbeddingsOptimized(
       const completed = Math.min(i + BATCH_SIZE, uncachedTexts.length);
       const totalCached = texts.length - uncachedTexts.length;
       onProgress?.(totalCached + completed, texts.length);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating embeddings batch:', error);
-      throw error;
+      if (error?.status === 401) {
+        throw new Error('Invalid OpenAI API key. Please check your VITE_OPENAI_API_KEY.');
+      }
+      if (error?.status === 429) {
+        throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+      }
+      if (error?.status === 403) {
+        throw new Error('OpenAI API access denied. Please check your API key has billing enabled.');
+      }
+      throw new Error(`OpenAI API error: ${error?.message || 'Unknown error'}`);
     }
   }
 
