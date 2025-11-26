@@ -44,6 +44,16 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
     return embedding;
   } catch (error: any) {
+    console.error('OpenAI API Error Details:', {
+      status: error?.status,
+      message: error?.message,
+      error: error?.error,
+      fullError: error
+    });
+
+    if (error?.status === 400) {
+      throw new Error(`Invalid request to OpenAI API. This may be due to: (1) Invalid API key format, (2) Billing not enabled on your OpenAI account, or (3) API key permissions. Error: ${error?.message || 'Unknown error'}`);
+    }
     if (error?.status === 401) {
       throw new Error('Invalid OpenAI API key. Please check your VITE_OPENAI_API_KEY.');
     }
@@ -53,7 +63,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     if (error?.status === 403) {
       throw new Error('OpenAI API access denied. Please check your API key has billing enabled.');
     }
-    throw new Error(`OpenAI API error: ${error?.message || 'Unknown error'}`);
+    throw new Error(`OpenAI API error (${error?.status || 'unknown'}): ${error?.message || 'Unknown error'}`);
   }
 }
 
@@ -101,6 +111,16 @@ export async function generateEmbeddingsOptimized(
       onProgress?.(totalCached + completed, texts.length);
     } catch (error: any) {
       console.error('Error generating embeddings batch:', error);
+      console.error('OpenAI API Error Details:', {
+        status: error?.status,
+        message: error?.message,
+        error: error?.error,
+        fullError: error
+      });
+
+      if (error?.status === 400) {
+        throw new Error(`Invalid request to OpenAI API. This may be due to: (1) Invalid API key format, (2) Billing not enabled on your OpenAI account, or (3) API key permissions. Error: ${error?.message || 'Unknown error'}`);
+      }
       if (error?.status === 401) {
         throw new Error('Invalid OpenAI API key. Please check your VITE_OPENAI_API_KEY.');
       }
@@ -110,7 +130,7 @@ export async function generateEmbeddingsOptimized(
       if (error?.status === 403) {
         throw new Error('OpenAI API access denied. Please check your API key has billing enabled.');
       }
-      throw new Error(`OpenAI API error: ${error?.message || 'Unknown error'}`);
+      throw new Error(`OpenAI API error (${error?.status || 'unknown'}): ${error?.message || 'Unknown error'}`);
     }
   }
 
