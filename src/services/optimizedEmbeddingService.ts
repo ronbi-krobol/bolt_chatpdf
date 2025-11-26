@@ -7,6 +7,7 @@ import {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 async function callEmbeddingFunction(texts: string[]): Promise<number[][]> {
   const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-embeddings`, {
@@ -14,6 +15,7 @@ async function callEmbeddingFunction(texts: string[]): Promise<number[][]> {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'X-OpenAI-Key': OPENAI_API_KEY,
     },
     body: JSON.stringify({ texts }),
   });

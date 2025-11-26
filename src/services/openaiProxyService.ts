@@ -1,5 +1,6 @@
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 export interface ChatCompletionMessage {
   role: 'system' | 'user' | 'assistant';
@@ -21,6 +22,7 @@ export async function chatCompletion(options: ChatCompletionOptions): Promise<an
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'X-OpenAI-Key': OPENAI_API_KEY,
     },
     body: JSON.stringify(options),
   });
@@ -43,6 +45,7 @@ export async function* streamChatCompletion(options: Omit<ChatCompletionOptions,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'X-OpenAI-Key': OPENAI_API_KEY,
     },
     body: JSON.stringify({ ...options, stream: true }),
   });

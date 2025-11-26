@@ -4,7 +4,7 @@ import { OpenAI } from "npm:openai@4.67.3";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, X-OpenAI-Key",
 };
 
 Deno.serve(async (req: Request) => {
@@ -16,9 +16,9 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY") || req.headers.get("X-OpenAI-Key");
     if (!openaiApiKey) {
-      throw new Error("OPENAI_API_KEY environment variable is not set");
+      throw new Error("OpenAI API key is required");
     }
 
     const openai = new OpenAI({
