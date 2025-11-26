@@ -41,7 +41,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const response = await openai.embeddings.create({
-      model: "text-embedding-3-small",
+      model: "text-embedding-3-large",
       input: texts,
     });
 
