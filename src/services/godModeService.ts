@@ -1,4 +1,4 @@
-import { getOpenAIClient } from './optimizedEmbeddingService';
+import { chatCompletion } from './openaiProxyService';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
@@ -15,7 +15,6 @@ export async function summarizeEntireDocument(
   documentText: string,
   onProgress?: (progress: string) => void
 ): Promise<string> {
-  const client = getOpenAIClient();
 
   onProgress?.('Analyzing document structure...');
 
@@ -33,7 +32,7 @@ export async function summarizeEntireDocument(
   for (let i = 0; i < chunks.length; i++) {
     onProgress?.(`Summarizing section ${i + 1}/${chunks.length}...`);
 
-    const response = await client.chat.completions.create({
+    const response = await chatCompletion({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -55,7 +54,7 @@ export async function summarizeEntireDocument(
   if (summaries.length > 1) {
     onProgress?.('Creating final summary...');
 
-    const finalResponse = await client.chat.completions.create({
+    const finalResponse = await chatCompletion({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -81,9 +80,7 @@ export async function extractTablesToExcel(
   documentText: string,
   fileName: string
 ): Promise<void> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -126,11 +123,9 @@ export async function generateQuizMCQ(
   documentText: string,
   numberOfQuestions: number = 10
 ): Promise<any> {
-  const client = getOpenAIClient();
-
   const sampleText = documentText.slice(0, 10000);
 
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -153,9 +148,7 @@ export async function createPresentationSlides(
   documentText: string,
   fileName: string
 ): Promise<void> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -207,9 +200,7 @@ export async function createPresentationSlides(
 }
 
 export async function extractEntities(documentText: string): Promise<any> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -229,9 +220,7 @@ export async function extractEntities(documentText: string): Promise<any> {
 }
 
 export async function comparePDFs(text1: string, text2: string): Promise<string> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -251,9 +240,7 @@ export async function comparePDFs(text1: string, text2: string): Promise<string>
 }
 
 export async function generateAnkiFlashcards(documentText: string): Promise<any> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -273,9 +260,7 @@ export async function generateAnkiFlashcards(documentText: string): Promise<any>
 }
 
 export async function generateMindMap(documentText: string): Promise<string> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -294,9 +279,7 @@ export async function generateMindMap(documentText: string): Promise<string> {
 }
 
 export async function explainLikeIm10(documentText: string): Promise<string> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -316,9 +299,7 @@ export async function explainLikeIm10(documentText: string): Promise<string> {
 }
 
 export async function convertToMarkdown(documentText: string): Promise<string> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -337,9 +318,7 @@ export async function convertToMarkdown(documentText: string): Promise<string> {
 }
 
 export async function findContradictions(documentText: string): Promise<string> {
-  const client = getOpenAIClient();
-
-  const response = await client.chat.completions.create({
+  const response = await chatCompletion({
     model: 'gpt-4o-mini',
     messages: [
       {

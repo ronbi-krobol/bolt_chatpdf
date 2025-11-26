@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import LandingPage from './components/LandingPage';
 import PDFViewerPage from './components/PDFViewerPage';
-import { initializeOpenAI } from './services/optimizedEmbeddingService';
 import { processUltraFastPDF, UltraFastProgress } from './services/ultraFastPDFOrchestrator';
 import { checkPDFUploadLimit, incrementPDFUpload } from './services/usageLimitService';
 import { getPDFById } from './services/pdfManagementService';
@@ -18,13 +17,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [showRateLimitModal, setShowRateLimitModal] = useState(false);
   const [remainingUploads, setRemainingUploads] = useState(3);
-
-  useEffect(() => {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    if (apiKey) {
-      initializeOpenAI(apiKey);
-    }
-  }, []);
 
   const handleFileUpload = async (file: File) => {
     setError(null);

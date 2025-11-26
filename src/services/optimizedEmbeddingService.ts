@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import {
   cacheEmbedding,
   getCachedEmbedding,
@@ -6,24 +5,26 @@ import {
   batchGetCachedEmbeddings,
 } from './cacheService';
 
-let openaiClient: OpenAI | null = null;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export function initializeOpenAI(apiKey?: string) {
-  const key = apiKey || import.meta.env.VITE_OPENAI_API_KEY;
-  if (!key) {
-    throw new Error('OpenAI API key not found. Please set VITE_OPENAI_API_KEY in your .env file.');
-  }
-  openaiClient = new OpenAI({
-    apiKey: key,
-    dangerouslyAllowBrowser: true,
+async function callEmbeddingFunction(texts: string[]): Promise<number[][]> {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-embeddings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({ texts }),
   });
-}
 
-export function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    initializeOpenAI();
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Edge Function error: ${response.status}`);
   }
-  return openaiClient!;
+
+  const data = await response.json();
+  return data.embeddings;
 }
 
 export async function generateEmbedding(text: string): Promise<number[]> {
@@ -33,37 +34,13 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 
   try {
-    const client = getOpenAIClient();
-    const response = await client.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: text,
-    });
-
-    const embedding = response.data[0].embedding;
+    const embeddings = await callEmbeddingFunction([text]);
+    const embedding = embeddings[0];
     await cacheEmbedding(text, embedding);
-
     return embedding;
   } catch (error: any) {
-    console.error('OpenAI API Error Details:', {
-      status: error?.status,
-      message: error?.message,
-      error: error?.error,
-      fullError: error
-    });
-
-    if (error?.status === 400) {
-      throw new Error(`Invalid request to OpenAI API. This may be due to: (1) Invalid API key format, (2) Billing not enabled on your OpenAI account, or (3) API key permissions. Error: ${error?.message || 'Unknown error'}`);
-    }
-    if (error?.status === 401) {
-      throw new Error('Invalid OpenAI API key. Please check your VITE_OPENAI_API_KEY.');
-    }
-    if (error?.status === 429) {
-      throw new Error('OpenAI API rate limit exceeded. Please try again later.');
-    }
-    if (error?.status === 403) {
-      throw new Error('OpenAI API access denied. Please check your API key has billing enabled.');
-    }
-    throw new Error(`OpenAI API error (${error?.status || 'unknown'}): ${error?.message || 'Unknown error'}`);
+    console.error('Embedding API Error:', error);
+    throw new Error(`Failed to generate embedding: ${error.message}`);
   }
 }
 
@@ -88,7 +65,6 @@ export async function generateEmbeddingsOptimized(
     return cachedEmbeddings as number[][];
   }
 
-  const client = getOpenAIClient();
   const BATCH_SIZE = 100;
   const newEmbeddings: number[][] = [];
 
@@ -96,12 +72,7 @@ export async function generateEmbeddingsOptimized(
     const batch = uncachedTexts.slice(i, i + BATCH_SIZE);
 
     try {
-      const response = await client.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: batch,
-      });
-
-      const batchEmbeddings = response.data.map((item) => item.embedding);
+      const batchEmbeddings = await callEmbeddingFunction(batch);
       newEmbeddings.push(...batchEmbeddings);
 
       await batchCacheEmbeddings(batch, batchEmbeddings);
@@ -111,26 +82,7 @@ export async function generateEmbeddingsOptimized(
       onProgress?.(totalCached + completed, texts.length);
     } catch (error: any) {
       console.error('Error generating embeddings batch:', error);
-      console.error('OpenAI API Error Details:', {
-        status: error?.status,
-        message: error?.message,
-        error: error?.error,
-        fullError: error
-      });
-
-      if (error?.status === 400) {
-        throw new Error(`Invalid request to OpenAI API. This may be due to: (1) Invalid API key format, (2) Billing not enabled on your OpenAI account, or (3) API key permissions. Error: ${error?.message || 'Unknown error'}`);
-      }
-      if (error?.status === 401) {
-        throw new Error('Invalid OpenAI API key. Please check your VITE_OPENAI_API_KEY.');
-      }
-      if (error?.status === 429) {
-        throw new Error('OpenAI API rate limit exceeded. Please try again later.');
-      }
-      if (error?.status === 403) {
-        throw new Error('OpenAI API access denied. Please check your API key has billing enabled.');
-      }
-      throw new Error(`OpenAI API error (${error?.status || 'unknown'}): ${error?.message || 'Unknown error'}`);
+      throw new Error(`Failed to generate embeddings: ${error.message}`);
     }
   }
 

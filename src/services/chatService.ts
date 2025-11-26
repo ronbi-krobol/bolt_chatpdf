@@ -1,5 +1,5 @@
-import { getOpenAIClient } from './embeddingService';
-import { searchRelevantChunks, RelevantChunk } from './vectorSearchService';
+import { streamChatCompletion } from './openaiProxyService';
+import { searchRelevantChunks } from './vectorSearchService';
 
 export async function generateChatResponse(
   pdfFileId: string,
@@ -20,28 +20,20 @@ Answer in clear bullet points when possible.
 Context:
 ${context}`;
 
-  const client = getOpenAIClient();
+  let fullResponse = '';
 
-  const stream = await client.chat.completions.create({
+  for await (const chunk of streamChatCompletion({
     model: 'gpt-4o',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userQuestion },
     ],
-    stream: true,
     temperature: 0.7,
     max_tokens: 1000,
-  });
-
-  let fullResponse = '';
-
-  for await (const chunk of stream) {
-    const content = chunk.choices[0]?.delta?.content || '';
-    if (content) {
-      fullResponse += content;
-      if (onStream) {
-        onStream(content);
-      }
+  })) {
+    fullResponse += chunk;
+    if (onStream) {
+      onStream(chunk);
     }
   }
 

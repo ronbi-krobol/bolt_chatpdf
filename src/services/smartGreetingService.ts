@@ -1,4 +1,4 @@
-import { getOpenAIClient } from './optimizedEmbeddingService';
+import { chatCompletion } from './openaiProxyService';
 
 export interface SmartGreeting {
   summary: string;
@@ -49,7 +49,7 @@ Format as JSON:
 }`;
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await chatCompletion({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
